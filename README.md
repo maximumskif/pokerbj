@@ -2,11 +2,39 @@
 
 A local desktop assistant that watches a **selected** game window or screen region and analyses
 blackjack and Texas Hold'em: local screen recognition → validated, version-stamped state →
-deterministic maths → optional plain-language explanations from Claude.
+deterministic maths → optional plain-language explanations from Claude. It also includes a live
+always-on-top overlay and a Stockfish-based chess post-game review.
 
 This is **probability analysis**, not prediction. It never clicks, bets, reads accounts, or evades
 anti-cheat. **Many online casinos and poker rooms prohibit real-time assistance software. Check the
 platform's rules before using live capture.** Replay analysis of saved screenshots works on its own.
+
+## Project status (pick up here)
+
+_Last updated 2026-10-28._
+
+**Done and verified**
+
+| Feature | State |
+|---|---|
+| Blackjack engine (rules, legal actions, basic strategy, EV, insurance/even money, shoe tracking) | ✅ tested against published values + independent simulator |
+| Hold'em engine (evaluator, ranges, exact/Monte Carlo equity, pot odds) | ✅ exhaustive evaluator check, hand-counted equities |
+| Capture → recognition → stabilization → state versioning | ✅ synthetic replays end to end; Windows capture smoke-tested in CI |
+| Dashboard (preview + overlays, corrections, calibration, timeline, settings, privacy) | ✅ driven in headless Chromium |
+| Live overlay window | ✅ rendered and unit-tested; not yet used on a real Windows desktop |
+| Chess post-game review | ✅ real Stockfish 19 review of the Opera Game |
+| Claude explanations | ⚠️ implemented + mocked tests; **no live API call made yet** (needs `ANTHROPIC_API_KEY`) |
+| CI (Ubuntu + Windows + frontend build) | ✅ green |
+
+**Next steps**
+
+1. On the Windows PC: `.\start.ps1`, then `python backend\scripts\get_stockfish.py` (the engine binary is not in git).
+2. Calibrate a real table: Settings → Calibration → copy a layout → select the game window → draw regions → label a few cards/numbers.
+3. Try the overlay on the real desktop and check placement and DPI scaling.
+4. Add `ANTHROPIC_API_KEY` to `.env` and confirm a live explanation passes validation.
+5. Possible improvements: resplit-aware split EV, decimal/currency amount parsing (currently digits only), a Claude explanation for chess reviews.
+
+**Scope decisions:** live overlay for blackjack/hold'em is a visible window with no detection evasion; chess is post-game review only (no live board reading).
 
 ## Quick start
 
