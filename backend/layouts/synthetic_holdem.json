@@ -1,0 +1,489 @@
+{
+ "name": "synthetic_holdem",
+ "game": "holdem",
+ "width": 960,
+ "height": 600,
+ "regions": [
+  {
+   "id": "hero_0",
+   "kind": "card",
+   "rect": {
+    "x": 400,
+    "y": 400,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hero card 1",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "hero_1",
+   "kind": "card",
+   "rect": {
+    "x": 470,
+    "y": 400,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hero card 2",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "board_0",
+   "kind": "card",
+   "rect": {
+    "x": 300,
+    "y": 200,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Board card 1",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "board_1",
+   "kind": "card",
+   "rect": {
+    "x": 372,
+    "y": 200,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Board card 2",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "board_2",
+   "kind": "card",
+   "rect": {
+    "x": 444,
+    "y": 200,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Board card 3",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "board_3",
+   "kind": "card",
+   "rect": {
+    "x": 516,
+    "y": 200,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Board card 4",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "board_4",
+   "kind": "card",
+   "rect": {
+    "x": 588,
+    "y": 200,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Board card 5",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "pot",
+   "kind": "number",
+   "rect": {
+    "x": 420,
+    "y": 150,
+    "w": 130,
+    "h": 34
+   },
+   "label": "Pot",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "hero_stack",
+   "kind": "number",
+   "rect": {
+    "x": 400,
+    "y": 500,
+    "w": 130,
+    "h": 34
+   },
+   "label": "Hero stack",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "hero_bet",
+   "kind": "number",
+   "rect": {
+    "x": 400,
+    "y": 355,
+    "w": 110,
+    "h": 34
+   },
+   "label": "Hero bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "hero_dealer",
+   "kind": "indicator",
+   "rect": {
+    "x": 545,
+    "y": 410,
+    "w": 26,
+    "h": 26
+   },
+   "label": "Hero dealer button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat1_cards",
+   "kind": "indicator",
+   "rect": {
+    "x": 60,
+    "y": 200,
+    "w": 70,
+    "h": 22
+   },
+   "label": "Seat 1 has cards",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat1_stack",
+   "kind": "number",
+   "rect": {
+    "x": 60,
+    "y": 228,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 1 stack",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat1_bet",
+   "kind": "number",
+   "rect": {
+    "x": 60,
+    "y": 264,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 1 bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat1_dealer",
+   "kind": "indicator",
+   "rect": {
+    "x": 140,
+    "y": 200,
+    "w": 22,
+    "h": 22
+   },
+   "label": "Seat 1 dealer button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat2_cards",
+   "kind": "indicator",
+   "rect": {
+    "x": 230,
+    "y": 40,
+    "w": 70,
+    "h": 22
+   },
+   "label": "Seat 2 has cards",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat2_stack",
+   "kind": "number",
+   "rect": {
+    "x": 230,
+    "y": 68,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 2 stack",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat2_bet",
+   "kind": "number",
+   "rect": {
+    "x": 230,
+    "y": 104,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 2 bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat2_dealer",
+   "kind": "indicator",
+   "rect": {
+    "x": 310,
+    "y": 40,
+    "w": 22,
+    "h": 22
+   },
+   "label": "Seat 2 dealer button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat3_cards",
+   "kind": "indicator",
+   "rect": {
+    "x": 650,
+    "y": 40,
+    "w": 70,
+    "h": 22
+   },
+   "label": "Seat 3 has cards",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat3_stack",
+   "kind": "number",
+   "rect": {
+    "x": 650,
+    "y": 68,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 3 stack",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat3_bet",
+   "kind": "number",
+   "rect": {
+    "x": 650,
+    "y": 104,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 3 bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat3_dealer",
+   "kind": "indicator",
+   "rect": {
+    "x": 730,
+    "y": 40,
+    "w": 22,
+    "h": 22
+   },
+   "label": "Seat 3 dealer button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat4_cards",
+   "kind": "indicator",
+   "rect": {
+    "x": 820,
+    "y": 200,
+    "w": 70,
+    "h": 22
+   },
+   "label": "Seat 4 has cards",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat4_stack",
+   "kind": "number",
+   "rect": {
+    "x": 820,
+    "y": 228,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 4 stack",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat4_bet",
+   "kind": "number",
+   "rect": {
+    "x": 820,
+    "y": 264,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 4 bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat4_dealer",
+   "kind": "indicator",
+   "rect": {
+    "x": 900,
+    "y": 200,
+    "w": 22,
+    "h": 22
+   },
+   "label": "Seat 4 dealer button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat5_cards",
+   "kind": "indicator",
+   "rect": {
+    "x": 650,
+    "y": 330,
+    "w": 70,
+    "h": 22
+   },
+   "label": "Seat 5 has cards",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat5_stack",
+   "kind": "number",
+   "rect": {
+    "x": 650,
+    "y": 358,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 5 stack",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat5_bet",
+   "kind": "number",
+   "rect": {
+    "x": 650,
+    "y": 394,
+    "w": 110,
+    "h": 30
+   },
+   "label": "Seat 5 bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "seat5_dealer",
+   "kind": "indicator",
+   "rect": {
+    "x": 730,
+    "y": 330,
+    "w": 22,
+    "h": 22
+   },
+   "label": "Seat 5 dealer button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_fold",
+   "kind": "indicator",
+   "rect": {
+    "x": 600,
+    "y": 540,
+    "w": 82,
+    "h": 44
+   },
+   "label": "Fold button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_check",
+   "kind": "indicator",
+   "rect": {
+    "x": 688,
+    "y": 540,
+    "w": 82,
+    "h": 44
+   },
+   "label": "Check button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_call",
+   "kind": "indicator",
+   "rect": {
+    "x": 776,
+    "y": 540,
+    "w": 82,
+    "h": 44
+   },
+   "label": "Call button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_raise",
+   "kind": "indicator",
+   "rect": {
+    "x": 864,
+    "y": 540,
+    "w": 82,
+    "h": 44
+   },
+   "label": "Raise button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "to_call",
+   "kind": "number",
+   "rect": {
+    "x": 776,
+    "y": 500,
+    "w": 82,
+    "h": 34
+   },
+   "label": "Amount to call",
+   "threshold": 110,
+   "polarity": "light"
+  }
+ ],
+ "rank_box": [
+  0.0,
+  0.0,
+  0.6,
+  0.38
+ ],
+ "suit_box": [
+  0.15,
+  0.42,
+  0.7,
+  0.45
+ ],
+ "synthetic": true
+}

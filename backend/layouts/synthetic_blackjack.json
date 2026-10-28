@@ -1,0 +1,372 @@
+{
+ "name": "synthetic_blackjack",
+ "game": "blackjack",
+ "width": 960,
+ "height": 600,
+ "regions": [
+  {
+   "id": "dealer_0",
+   "kind": "card",
+   "rect": {
+    "x": 300,
+    "y": 70,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Dealer card 1",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "dealer_1",
+   "kind": "card",
+   "rect": {
+    "x": 372,
+    "y": 70,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Dealer card 2",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "dealer_2",
+   "kind": "card",
+   "rect": {
+    "x": 444,
+    "y": 70,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Dealer card 3",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "dealer_3",
+   "kind": "card",
+   "rect": {
+    "x": 516,
+    "y": 70,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Dealer card 4",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "dealer_4",
+   "kind": "card",
+   "rect": {
+    "x": 588,
+    "y": 70,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Dealer card 5",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "dealer_5",
+   "kind": "card",
+   "rect": {
+    "x": 660,
+    "y": 70,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Dealer card 6",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p0_0",
+   "kind": "card",
+   "rect": {
+    "x": 110,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 1 card 1",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p0_1",
+   "kind": "card",
+   "rect": {
+    "x": 180,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 1 card 2",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p0_2",
+   "kind": "card",
+   "rect": {
+    "x": 250,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 1 card 3",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p0_3",
+   "kind": "card",
+   "rect": {
+    "x": 320,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 1 card 4",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p0_4",
+   "kind": "card",
+   "rect": {
+    "x": 390,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 1 card 5",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "bet0",
+   "kind": "number",
+   "rect": {
+    "x": 110,
+    "y": 410,
+    "w": 130,
+    "h": 34
+   },
+   "label": "Hand 1 bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "active0",
+   "kind": "indicator",
+   "rect": {
+    "x": 110,
+    "y": 396,
+    "w": 340,
+    "h": 8
+   },
+   "label": "Hand 1 active marker",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p1_0",
+   "kind": "card",
+   "rect": {
+    "x": 520,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 2 card 1",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p1_1",
+   "kind": "card",
+   "rect": {
+    "x": 590,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 2 card 2",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p1_2",
+   "kind": "card",
+   "rect": {
+    "x": 660,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 2 card 3",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p1_3",
+   "kind": "card",
+   "rect": {
+    "x": 730,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 2 card 4",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "p1_4",
+   "kind": "card",
+   "rect": {
+    "x": 800,
+    "y": 300,
+    "w": 64,
+    "h": 90
+   },
+   "label": "Hand 2 card 5",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "bet1",
+   "kind": "number",
+   "rect": {
+    "x": 520,
+    "y": 410,
+    "w": 130,
+    "h": 34
+   },
+   "label": "Hand 2 bet",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "active1",
+   "kind": "indicator",
+   "rect": {
+    "x": 520,
+    "y": 396,
+    "w": 340,
+    "h": 8
+   },
+   "label": "Hand 2 active marker",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "bankroll",
+   "kind": "number",
+   "rect": {
+    "x": 20,
+    "y": 548,
+    "w": 180,
+    "h": 34
+   },
+   "label": "Bankroll",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_hit",
+   "kind": "indicator",
+   "rect": {
+    "x": 300,
+    "y": 540,
+    "w": 118,
+    "h": 44
+   },
+   "label": "Hit button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_stand",
+   "kind": "indicator",
+   "rect": {
+    "x": 428,
+    "y": 540,
+    "w": 118,
+    "h": 44
+   },
+   "label": "Stand button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_double",
+   "kind": "indicator",
+   "rect": {
+    "x": 556,
+    "y": 540,
+    "w": 118,
+    "h": 44
+   },
+   "label": "Double button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_split",
+   "kind": "indicator",
+   "rect": {
+    "x": 684,
+    "y": 540,
+    "w": 118,
+    "h": 44
+   },
+   "label": "Split button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "btn_surrender",
+   "kind": "indicator",
+   "rect": {
+    "x": 812,
+    "y": 540,
+    "w": 118,
+    "h": 44
+   },
+   "label": "Surrender button",
+   "threshold": 110,
+   "polarity": "light"
+  },
+  {
+   "id": "shuffle",
+   "kind": "indicator",
+   "rect": {
+    "x": 780,
+    "y": 14,
+    "w": 160,
+    "h": 30
+   },
+   "label": "Shuffle notice",
+   "threshold": 110,
+   "polarity": "light"
+  }
+ ],
+ "rank_box": [
+  0.0,
+  0.0,
+  0.6,
+  0.38
+ ],
+ "suit_box": [
+  0.15,
+  0.42,
+  0.7,
+  0.45
+ ],
+ "synthetic": true
+}
