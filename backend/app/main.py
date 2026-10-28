@@ -285,6 +285,54 @@ async def vision(v: VisionReq):
     return res
 
 
+# ---------------------------------------------------------------- chess post-game review
+from .chess_review import ReviewJobs, find_engine  # noqa: E402
+
+chess_jobs = ReviewJobs()
+
+
+class ChessReviewReq(BaseModel):
+    pgn: str
+    depth: int = 16
+    time_per_move: float | None = None
+
+
+@app.get("/api/chess/status")
+def chess_status():
+    path = find_engine()
+    return {"engine_found": bool(path), "engine_path": path}
+
+
+@app.post("/api/chess/review")
+def chess_review(req: ChessReviewReq):
+    try:
+        job_id = chess_jobs.start(req.pgn, depth=max(6, min(req.depth, 30)), time_per_move=req.time_per_move)
+    except (ValueError, RuntimeError) as e:
+        raise HTTPException(400, str(e))
+    return {"job_id": job_id}
+
+
+@app.get("/api/chess/review/{job_id}")
+def chess_review_job(job_id: str):
+    job = chess_jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "unknown job")
+    return job
+
+
+# ---------------------------------------------------------------- overlay
+@app.post("/api/overlay/launch")
+def launch_overlay():
+    import subprocess
+    import sys
+    if sys.platform != "win32" and not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
+        raise HTTPException(400, "no desktop display available to show the overlay (run the backend natively on Windows)")
+    port = os.environ.get("TABLE_ASSISTANT_PORT", "8765")
+    subprocess.Popen([sys.executable, str(ROOT / "overlay.py"), "--url", f"http://127.0.0.1:{port}"])
+    service.event("control", "Overlay window launched")
+    return {"launched": True}
+
+
 # ---------------------------------------------------------------- history & privacy
 @app.get("/api/history")
 def history():

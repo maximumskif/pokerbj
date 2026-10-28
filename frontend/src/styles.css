@@ -190,3 +190,14 @@ main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); g
 .crop { max-width: 160px; max-height: 160px; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 4px; background: #000; }
 .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #1f4f8a; padding: 8px 14px; border-radius: 6px; z-index: 40; }
 .toast.err { background: #7a2633; }
+
+/* chess review */
+.viewtabs { display: flex; gap: 4px; margin-right: 8px; }
+.chess-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; padding: 14px 18px; }
+@media (max-width: 1100px) { .chess-main { grid-template-columns: 1fr; } }
+.pgn { width: 100%; background: #0e121b; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 8px; font: 12px ui-monospace, Consolas, monospace; margin-bottom: 8px; resize: vertical; }
+.chessboard { width: 100%; max-width: 520px; display: block; margin: 0 auto; border-radius: 4px; }
+.evalgraph { width: 100%; height: 90px; background: #222838; border-radius: 4px; margin: 8px 0; cursor: pointer; }
+.movelist { display: flex; flex-wrap: wrap; gap: 3px; max-height: 220px; overflow: auto; }
+.mv { padding: 2px 6px; font-size: 12px; border-left: 3px solid; border-radius: 3px; }
+.mv.on { background: #1f4f8a; }

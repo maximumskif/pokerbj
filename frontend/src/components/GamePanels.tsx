@@ -146,6 +146,26 @@ export function BlackjackAnalysis({ a }: { a: Json }) {
         </section>
       )}
 
+      {a.insurance && (
+        <section className="panel">
+          <div className="panel-head">
+            <h2>Insurance (dealer shows an ace)</h2>
+            <span className={`pill ${a.insurance.insurance_ev_per_unit > 0 ? "on" : "warn"}`}>{a.insurance.verdict}</span>
+          </div>
+          <div className="stats">
+            <div><span>P(hole card is ten)</span><b>{pct(a.insurance.p_hole_ten)}</b></div>
+            <div><span>Break-even</span><b>{pct(a.insurance.break_even_p_ten)}</b></div>
+            <div><span>EV per unit insured</span><b>{signed(a.insurance.insurance_ev_per_unit)}</b></div>
+            <div><span>EV per main bet</span><b>{signed(a.insurance.insurance_ev_per_main_bet)}</b></div>
+          </div>
+          {a.insurance.even_money && (
+            <p className="small">
+              You have blackjack: even money pays {a.insurance.even_money.take.toFixed(2)}; declining averages {a.insurance.even_money.decline.toFixed(4)} → <b>{a.insurance.even_money.better}</b> ({a.insurance.even_money.units}).
+            </p>
+          )}
+          <p className="small muted">Basis: {a.insurance.basis}; {a.insurance.units}.</p>
+        </section>
+      )}
       {comp && (
         <section className="panel">
           <div className="panel-head">

@@ -104,6 +104,7 @@ class ScreenSource:
         x, y, w, h = self.rect()
         if w <= 0 or h <= 0:
             raise SourceError("empty capture rectangle")
+        self.last_rect = (x, y, w, h)
         try:
             shot = self._mss.grab({"left": x, "top": y, "width": w, "height": h})
         except Exception as e:

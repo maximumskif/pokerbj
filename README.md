@@ -43,6 +43,22 @@ Front-end development with hot reload: run `run.py`, then `cd frontend && npm ru
 Tests: `cd backend && .venv/bin/python -m pytest -q` (≈20 s, includes the exhaustive 5-card evaluator check).
 Headless demo: `.venv/bin/python scripts/replay_headless.py synthetic_blackjack` (or `synthetic_holdem`).
 
+### Live overlay
+
+Click **▣ Overlay** in the dashboard, or run `python backend/overlay.py`. A small always-on-top window shows
+the current recommendation or equity, the flags (UNCERTAIN, STALE, PAUSED, SYNTHETIC) and the analysis age, updated
+every 300 ms from the local service. Drag it outside the captured region: if it overlaps, it is captured too and
+would confuse recognition, so it warns "OVERLAPS CAPTURE". It only displays information and never clicks or sends input.
+It is an ordinary visible window and is not hidden from screen recording.
+
+### Chess post-game review
+
+Dashboard → **Chess review**. Paste the PGN of a finished game. Stockfish analyses every position locally,
+and the review shows the engine's best move and line, the classification (best / good / inaccuracy / mistake /
+blunder, using Lichess-style winning-chance thresholds), per-side accuracy and a win-probability graph.
+Install the engine with `python backend/scripts/get_stockfish.py` (official GPLv3 release into `backend/engines/`),
+or set `STOCKFISH_PATH` in `.env`. Chess is post-game only: there is no live board reading.
+
 ### Optional: Claude
 
 Copy `.env.example` to `.env` and set `ANTHROPIC_API_KEY`. The model is set by `CLAUDE_MODEL`
@@ -74,6 +90,9 @@ replay folder (replay.json + frames)  ─┴─► change detection ─► local
 | `backend/app/tracking/*` | stabilizer and game trackers |
 | `backend/app/claude_client.py` | Claude calls, output validation, rate limits, cache, image fallback |
 | `backend/app/service.py` | capture loop, versioning, staleness, corrections |
+| `backend/overlay.py` | always-on-top live overlay window (Tkinter, reads the local API) |
+| `backend/app/chess_review.py` | PGN review with a UCI engine (python-chess) |
+| `backend/scripts/windows_smoke.py` | live-capture smoke test run by CI on a Windows desktop |
 | `frontend/src` | dashboard |
 
 ## Using it on a real table (Windows)
@@ -111,6 +130,15 @@ Region ids drive the game logic:
 * **Claude**: invented numbers, contradicting actions, guarantee language and wrong state versions are rejected.
   Late responses are discarded. Failures, no-key operation, rate limits, usage caps and cache are covered.
   These are tested with a mocked client: **no live API call was made during development** (no key available).
+* **Insurance / even money**: −1/13 per unit insured in the infinite-deck model; positive only when tens exceed
+  1/3 of the remaining shoe; even money is declined at 3:2 and taken at 6:5. This is verified arithmetically in tests.
+* **Overlay**: the display text is derived from real pipeline states, and suppressed or stale states never show
+  an action. The window was rendered under WSLg (Linux font fallback; Windows uses Segoe UI).
+* **Chess review**: classification and the pipeline are checked on Scholar's and Fool's mate with an independent
+  mate-in-1 test engine. A real-Stockfish test runs whenever an engine is installed. **Not run here:** downloading
+  Stockfish was not permitted in the development sandbox, so live-engine review is unverified until you install it.
+* **CI** (`.github/workflows/ci.yml`): tests on Ubuntu and Windows, a Windows live-capture smoke test
+  (window enumeration, region and window capture, Tk window), and the frontend build.
 * **End to end**: both synthetic replays run through the real recognizer and pipeline. A test asserts the exact
   blackjack decision sequence. The dashboard was driven in headless Chromium (including the manual-correction flow).
 
@@ -123,7 +151,7 @@ Region ids drive the game logic:
   calibration (regions + labelled glyphs) and will be less robust to animations, skins and scaling. No Tesseract is used.
   Decimal amounts and currency symbols are not parsed (digits only).
 * **Blackjack EV** uses an infinite-deck model, or probabilities frozen at the observed shoe composition (no removal
-  within the hand). Split EV ignores resplits. Insurance/even money are not evaluated. The fixed chart covers
+  within the hand). Split EV ignores resplits. The fixed chart covers
   4–8 deck peek games. Other configurations fall back to the EV-maximising action and are labelled.
 * **Shoe tracking** relies on seeing every hand at the layout's regions. Other players' cards outside the regions
   are treated as unseen random cards (valid by exchangeability, but a misread that is committed and never

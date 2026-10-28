@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, connectState, Json } from "./api";
 import { CapturePanel } from "./components/CapturePanel";
+import { ChessReview } from "./components/ChessReview";
 import { BlackjackAnalysis, BlackjackHand, HoldemAnalysis, HoldemHand } from "./components/GamePanels";
 import { RegionInspector } from "./components/RegionInspector";
 import { SettingsDrawer } from "./components/Settings";
@@ -15,6 +16,7 @@ export default function App() {
   const [layout, setLayout] = useState<Json>(null);
   const [draft, setDraft] = useState<Json>(null);
   const [drawing, setDrawing] = useState<string | null>(null);
+  const [view, setView] = useState<"tables" | "chess">("tables");
   const [toast, setToast] = useState<{ msg: string; err: boolean } | null>(null);
   const [ack, setAck] = useState<boolean>(() => {
     try {
@@ -49,8 +51,21 @@ export default function App() {
           <span className="logo">◆</span> Table Assistant
           <span className="muted small"> probability analysis · manual control only</span>
         </div>
-        <button onClick={() => setSettingsOpen(!settingsOpen)}>⚙ Settings</button>
+        <div className="row gap">
+          <div className="viewtabs">
+            <button className={view === "tables" ? "tab on" : "tab"} onClick={() => setView("tables")}>Blackjack / Hold'em</button>
+            <button className={view === "chess" ? "tab on" : "tab"} onClick={() => setView("chess")}>Chess review</button>
+          </div>
+          <button
+            title="Always-on-top window with the live recommendation. Place it outside the captured region."
+            onClick={() => api.post("/api/overlay/launch").then(() => notify("Overlay launched — drag it outside the captured area")).catch((e) => notify(String(e), true))}
+          >
+            ▣ Overlay
+          </button>
+          <button onClick={() => setSettingsOpen(!settingsOpen)}>⚙ Settings</button>
+        </div>
       </header>
+      {view === "chess" ? <ChessReview notify={notify} /> : <>
       <StatusBar state={state} connected={connected} now={now} />
       {!ack && (
         <div className="notice">
@@ -97,6 +112,7 @@ export default function App() {
           <ExplanationPanel state={state} notify={notify} />
         </div>
       </main>
+      </>}
       {settingsOpen && (
         <SettingsDrawer state={state} onClose={() => setSettingsOpen(false)} notify={notify} draft={draft} setDraft={setDraft} drawing={drawing} setDrawing={setDrawing} />
       )}

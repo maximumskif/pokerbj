@@ -416,6 +416,7 @@ class AppService:
             "last_processed_wall": self.last_processed_wall,
             "replay_position": (self.source.index, len(self.source.frames)) if isinstance(self.source, ReplaySource) else None,
             "stale": stale,
+            "capture_rect": getattr(self.source, "last_rect", None),
             "server_time": now,
             "state_version": self.version,
         }

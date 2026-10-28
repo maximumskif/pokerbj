@@ -6,3 +6,5 @@ backend/replays/
 .pytest_cache/
 frontend/node_modules/
 frontend/dist/
+backend/engines/
+frontend/*.tsbuildinfo

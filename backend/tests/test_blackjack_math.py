@@ -220,3 +220,31 @@ def test_composition_probabilities():
     rich[10] += 40  # ten-rich shoe makes dealer 6 bust more often
     d_rich = dealer_distribution(6, probs_from_counts(rich), False, False)["bust"]
     assert d_rich > dealer_distribution(6, INFINITE_DECK, False, False)["bust"]
+
+
+# ---- insurance / even money -------------------------------------------------
+
+def test_insurance_infinite_deck_is_minus_one_thirteenth():
+    from app.analysis import insurance_analysis
+    ins = insurance_analysis({"mode": "unknown"}, BlackjackRules(), player_blackjack=False)
+    assert ins["insurance_ev_per_unit"] == pytest.approx(-1 / 13, abs=1e-4)  # classic -7.69%
+    assert ins["verdict"] == "negative expectation"
+
+
+def test_insurance_turns_positive_when_ten_rich():
+    from app.analysis import insurance_analysis
+    rem = {v: 4 for v in range(1, 10)} | {10: 20}  # 20 tens of 56 cards > 1/3
+    ins = insurance_analysis({"mode": "known", "remaining": rem}, BlackjackRules(), False)
+    assert ins["p_hole_ten"] == pytest.approx(20 / 56, abs=1e-4)
+    assert ins["insurance_ev_per_unit"] == pytest.approx(3 * 20 / 56 - 1, abs=1e-4)
+    assert ins["verdict"] == "positive expectation"
+
+
+def test_even_money_matches_insurance_logic():
+    from app.analysis import insurance_analysis
+    ins = insurance_analysis({"mode": "unknown"}, BlackjackRules(blackjack_payout=1.5), True)
+    # decline: 1.5 * (9/13) = 1.0385 > 1 -> declining is better on average with 3:2
+    assert ins["even_money"]["decline"] == pytest.approx(1.5 * 9 / 13, abs=1e-4)
+    assert ins["even_money"]["better"] == "decline even money"
+    ins65 = insurance_analysis({"mode": "unknown"}, BlackjackRules(blackjack_payout=1.2), True)
+    assert ins65["even_money"]["better"] == "take even money"  # 1.2 * 9/13 = 0.83 < 1

@@ -87,6 +87,10 @@ def analyze_blackjack(snap: dict, rules: BlackjackRules, version: int) -> dict:
                      "soft": hand_total([Card.parse(c).bj_value for c in vals])[1] if vals and "hidden" not in vals else None,
                      "problems": prob} for h, vals, prob in played]
     out["composition"] = snap["composition"]
+    if up_card is not None and up_card.bj_value == 1:
+        player_bj = bool(played) and len(played) == 1 and len(played[0][1]) == 2 and "hidden" not in played[0][1] \
+            and sorted(Card.parse(c).bj_value for c in played[0][1]) == [1, 10]
+        out["insurance"] = insurance_analysis(snap["composition"], rules, player_bj)
     if not deciding:
         out["message"] = "Waiting for a player decision (no action buttons lit)."
         return out
@@ -165,13 +169,44 @@ def analyze_blackjack(snap: dict, rules: BlackjackRules, version: int) -> dict:
         "assumptions": [
             "after this decision, play continues with the total-dependent optimal strategy under the same model",
             "split EV = 2 x one-hand EV; resplits not modeled" + (" (lower bound: resplitting allowed)" if rules.max_split_hands > 2 else ""),
-            "insurance / even money not evaluated",
+            "insurance / even money evaluated separately (see insurance panel when the upcard is an ace)",
             "values are long-run averages; any single hand can win or lose",
         ],
     }
     out["dealer_outcomes"] = {"distribution": dist, "basis": "conditional on no dealer blackjack" if m.p_bj else "upcard cannot make blackjack"}
     out["status"] = "decision"
     out["facts"] = _bj_facts(out)
+    return out
+
+
+def insurance_analysis(comp: dict, rules: BlackjackRules, player_blackjack: bool) -> dict:
+    """Insurance pays 2:1 on a side bet of half the main wager; it wins iff the hole card is ten-valued.
+
+    The hole card is unseen, so with a known shoe its ten probability is
+    remaining tens / remaining cards (unseen cards are exchangeable).
+    """
+    if comp.get("mode") == "known":
+        rem = comp["remaining"]
+        p_ten = rem[10] / sum(rem.values())
+        basis = "observed remaining-shoe composition"
+    else:
+        p_ten = 4 / 13
+        basis = "infinite-deck model (shoe composition unknown)" if comp.get("mode") == "unknown" else "full shoe (continuous shuffler)"
+    ev_per_unit = 3 * p_ten - 1  # +2 with probability p, -1 otherwise
+    out = {
+        "p_hole_ten": round(p_ten, 4),
+        "insurance_ev_per_unit": round(ev_per_unit, 4),
+        "insurance_ev_per_main_bet": round(ev_per_unit / 2, 4),
+        "break_even_p_ten": round(1 / 3, 4),
+        "verdict": "positive expectation" if ev_per_unit > 0 else "negative expectation",
+        "basis": basis,
+        "units": "per 1 unit of insurance bet (insurance costs half the main bet)",
+    }
+    if player_blackjack:
+        decline = rules.blackjack_payout * (1 - p_ten)  # push vs dealer BJ, else paid blackjack
+        out["even_money"] = {"take": 1.0, "decline": round(decline, 4),
+                             "better": "take even money" if 1.0 > decline else "decline even money",
+                             "units": "per 1 unit main bet; even money is equivalent to insuring a blackjack"}
     return out
 
 
@@ -186,6 +221,10 @@ def _bj_facts(a: dict) -> list[dict]:
         facts.append({"name": f"dealer final {k} probability", "value": v})
     for c in d["cards"]:
         facts.append({"name": "player card", "value": c})
+    ins = a.get("insurance")
+    if ins:
+        facts.append({"name": "probability hole card is ten-valued", "value": ins["p_hole_ten"]})
+        facts.append({"name": "insurance EV per unit insured", "value": ins["insurance_ev_per_unit"]})
     comp = a.get("composition", {})
     if comp.get("mode") == "known":
         facts.append({"name": "Hi-Lo true count", "value": comp["hi_lo_true"]})
