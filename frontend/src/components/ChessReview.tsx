@@ -174,6 +174,7 @@ export function ChessReview({ notify }: { notify: (m: string, e?: boolean) => vo
               <tbody>
                 <tr><td>Played</td><td><b>{m.san}</b> → eval {evalText(m)} (White's view)</td></tr>
                 <tr><td>Engine's best</td><td><b>{m.best_san ?? "—"}</b>{m.best_line?.length ? <span className="muted"> · line: {m.best_line.join(" ")}</span> : null}</td></tr>
+                {m.note && <tr><td>Note</td><td style={{ color: "var(--warn)" }}>{m.note}</td></tr>}
                 <tr><td>Win chance lost</td><td>{(m.win_chance_drop * 50).toFixed(1)} percentage points</td></tr>
                 <tr><td>White win estimate</td><td>{m.white_win_pct}%</td></tr>
                 <tr><td>Move accuracy</td><td>{m.accuracy}%</td></tr>

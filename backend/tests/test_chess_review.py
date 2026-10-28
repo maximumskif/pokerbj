@@ -36,6 +36,7 @@ def test_scholars_mate_blunder_and_best():
     by_san = {m["san"]: m for m in r["moves"]}
     assert by_san["Nf6"]["classification"] == "blunder"   # allows Qxf7# (mate in 1)
     assert by_san["Nf6"]["mate_after"] == -1               # from Black's view: mated next move
+    assert by_san["Nf6"]["note"].startswith("allows forced mate in 1")
     assert by_san["Qxf7#"]["classification"] == "best"
     assert r["summary"]["final"] == "1-0"
     assert r["summary"]["black"]["blunder"] == 1 and r["summary"]["white"]["blunder"] == 0

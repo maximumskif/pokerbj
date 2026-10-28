@@ -116,6 +116,11 @@ def review(game: chess.pgn.Game, engine, limit: chess.engine.Limit, progress=Non
         label = "best" if best_uci == mv.uci() else classify(wc_b, wc_a)
         if label in ("inaccuracy", "mistake", "blunder"):
             counts["white" if mover == chess.WHITE else "black"][label] += 1
+        note = None
+        if mate_after is not None and mate_after < 0 and not (mate_before is not None and mate_before < 0):
+            note = f"allows forced mate in {-mate_after}" + (f"; {best_san} avoids it" if best_san and best_uci != mv.uci() else "")
+        elif mate_before is not None and mate_before > 0 and not (mate_after is not None and mate_after > 0):
+            note = f"missed a forced mate in {mate_before}" + (f" ({best_san})" if best_san else "")
         a = move_accuracy(50 + 50 * wc_b, 50 + 50 * wc_a)
         acc[mover].append(a)
         white_cp, white_mate = score_cp(after["score"], chess.WHITE) if after else (
@@ -129,7 +134,7 @@ def review(game: chess.pgn.Game, engine, limit: chess.engine.Limit, progress=Non
             "white_eval_cp": white_cp, "white_mate": white_mate,
             "white_win_pct": round(50 + 50 * winning_chances(white_cp), 1),
             "win_chance_drop": round(max(0.0, wc_b - wc_a), 3),
-            "classification": label, "accuracy": round(a, 1),
+            "classification": label, "accuracy": round(a, 1), "note": note,
         })
     h = game.headers
     return {
