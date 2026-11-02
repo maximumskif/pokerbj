@@ -38,6 +38,7 @@ def test_scholars_mate_blunder_and_best():
     assert by_san["Nf6"]["mate_after"] == -1               # from Black's view: mated next move
     assert by_san["Nf6"]["note"].startswith("allows forced mate in 1")
     assert by_san["Qxf7#"]["classification"] == "best"
+    assert by_san["Qxf7#"]["note"] is None                 # delivering mate is not "missing" it
     assert r["summary"]["final"] == "1-0"
     assert r["summary"]["black"]["blunder"] == 1 and r["summary"]["white"]["blunder"] == 0
     assert r["moves"][-1]["white_win_pct"] == 100.0
@@ -49,6 +50,39 @@ def test_fools_mate():
     assert g4["san"] == "g4" and g4["classification"] == "blunder"
     assert r["moves"][3]["best_san"] == "Qh4#" and r["moves"][3]["classification"] == "best"
     assert r["summary"]["final"] == "0-1"
+
+
+class ShallowEngine(FakeEngine):
+    """Mimics a horizon effect: before 3...Nf6 it recommends Nf6 at 0.00, missing the reply Qxf7#."""
+
+    def analyse(self, board, limit):
+        if board.fullmove_number == 3 and board.turn == chess.BLACK:
+            return {"score": chess.engine.PovScore(chess.engine.Cp(0), board.turn), "pv": [board.parse_san("Nf6")]}
+        return super().analyse(board, limit)
+
+
+def test_engine_top_move_still_flagged_when_post_move_eval_collapses():
+    r = review(parse_pgn(SCHOLAR), ShallowEngine(), chess.engine.Limit(depth=1))
+    nf6 = next(m for m in r["moves"] if m["san"] == "Nf6")
+    assert nf6["best_san"] == "Nf6"
+    assert nf6["classification"] == "blunder"
+    assert nf6["note"] == "allows forced mate in 1"        # no "Nf6 avoids it" when Nf6 was the suggestion
+    assert r["summary"]["black"]["blunder"] == 1
+
+
+class NoisyEngine(FakeEngine):
+    """Before 3.Qh5 it recommends Qh5 at +5.00; the post-move eval is only material (0.00)."""
+
+    def analyse(self, board, limit):
+        if board.fullmove_number == 3 and board.turn == chess.WHITE:
+            return {"score": chess.engine.PovScore(chess.engine.Cp(500), board.turn), "pv": [board.parse_san("Qh5")]}
+        return super().analyse(board, limit)
+
+
+def test_engine_top_move_not_demoted_by_centipawn_noise():
+    r = review(parse_pgn(SCHOLAR), NoisyEngine(), chess.engine.Limit(depth=1))
+    qh5 = next(m for m in r["moves"] if m["san"] == "Qh5")
+    assert qh5["win_chance_drop"] >= 0.3 and qh5["classification"] == "best"
 
 
 def test_winning_chances_and_thresholds():

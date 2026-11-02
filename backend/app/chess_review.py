@@ -113,13 +113,16 @@ def review(game: chess.pgn.Game, engine, limit: chess.engine.Limit, progress=Non
         else:
             cp_after, mate_after = score_cp(after["score"], mover)
         wc_b, wc_a = winning_chances(cp_before), winning_chances(cp_after)
-        label = "best" if best_uci == mv.uci() else classify(wc_b, wc_a)
+        allows_mate = mate_after is not None and mate_after < 0 and not (mate_before is not None and mate_before < 0)
+        # the engine's top move is "best" unless the post-move search finds a forced mate against it
+        # (centipawn swings between fixed-depth searches are noise and don't demote the top move)
+        label = "best" if best_uci == mv.uci() and not allows_mate else classify(wc_b, wc_a)
         if label in ("inaccuracy", "mistake", "blunder"):
             counts["white" if mover == chess.WHITE else "black"][label] += 1
         note = None
-        if mate_after is not None and mate_after < 0 and not (mate_before is not None and mate_before < 0):
+        if allows_mate:
             note = f"allows forced mate in {-mate_after}" + (f"; {best_san} avoids it" if best_san and best_uci != mv.uci() else "")
-        elif mate_before is not None and mate_before > 0 and not (mate_after is not None and mate_after > 0):
+        elif mate_before is not None and mate_before > 0 and not (mate_after is not None and mate_after >= 0):  # 0 = mate delivered
             note = f"missed a forced mate in {mate_before}" + (f" ({best_san})" if best_san else "")
         a = move_accuracy(50 + 50 * wc_b, 50 + 50 * wc_a)
         acc[mover].append(a)
@@ -147,7 +150,7 @@ def review(game: chess.pgn.Game, engine, limit: chess.engine.Limit, progress=Non
             "final": board.result(claim_draw=True) if board.is_game_over(claim_draw=True) else h.get("Result", "*"),
         },
         "method": {
-            "classification": "drop in Lichess-style winning chances: inaccuracy >= 0.1, mistake >= 0.2, blunder >= 0.3 (scale -1..1); 'best' = engine's top move",
+            "classification": "drop in Lichess-style winning chances: inaccuracy >= 0.1, mistake >= 0.2, blunder >= 0.3 (scale -1..1); 'best' = engine's top move unless the post-move search finds a forced mate against it",
             "accuracy": "Lichess-style per-move accuracy from win% loss, averaged per side (approximation)",
             "note": "engine evaluations depend on depth/time; small differences between engines and settings are normal",
         },
