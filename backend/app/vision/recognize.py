@@ -10,17 +10,22 @@ runner-up; it measures recognition reliability only.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import cv2
 import numpy as np
 
+from ..amounts import parse_amount
 from ..cards import RANKS, RED_SUITS, SUITS, Card
 from ..schemas import Layout, Observation, RegionDef
 from . import synth
 
 GLYPH = (24, 32)  # w, h for rank/digit glyphs
 SUIT_GLYPH = (28, 28)
+# non-digit glyphs that can appear in amounts, by template file name
+SYMBOLS = {"dollar": "$", "euro": "€", "pound": "£", "yen": "¥", "k": "k", "m": "M"}
+SYMBOL_NAMES = {**{c: n for n, c in SYMBOLS.items()}, "K": "k"}
 
 
 def _crop(img: np.ndarray, x: int, y: int, w: int, h: int) -> np.ndarray:
@@ -70,6 +75,7 @@ class Recognizer:
         self.rank_t: dict[str, list[np.ndarray]] = {}
         self.suit_t: dict[str, list[np.ndarray]] = {}
         self.digit_t: dict[str, list[np.ndarray]] = {}
+        self.sym_t: dict[str, list[np.ndarray]] = {}  # currency signs / k / M, keyed by the character
         self._builtin_templates()
         self._load_custom()
 
@@ -86,11 +92,11 @@ class Recognizer:
             g = self._suit_glyph(face)
             if g is not None:
                 self.suit_t.setdefault(suit, []).append(g)
-        for d in "0123456789":
+        for d in "0123456789$kM":
             img = np.zeros((40, 40, 3), np.uint8)
             cv2.putText(img, d, (6, 32), synth.FONT, 0.8, (235, 235, 235), 2, cv2.LINE_AA)
             g = _normalize_glyph((cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) > 120).astype(np.uint8) * 255, GLYPH)
-            self.digit_t.setdefault(d, []).append(g)
+            (self.digit_t if d.isdigit() else self.sym_t).setdefault(d, []).append(g)
 
     def _load_custom(self):
         if not self.template_dir or not self.template_dir.exists():
@@ -102,6 +108,10 @@ class Recognizer:
             if g is None:
                 continue
             g = g.astype(np.float32) / 255.0
+            if kind == "sym":
+                if label in SYMBOLS:
+                    self.sym_t.setdefault(SYMBOLS[label], []).append(g)
+                continue
             {"rank": self.rank_t, "suit": self.suit_t, "digit": self.digit_t}.get(kind, {}).setdefault(label, []).append(g)
 
     def save_card_template(self, card_crop: np.ndarray, card: Card) -> list[str]:
@@ -123,16 +133,25 @@ class Recognizer:
     def save_number_template(self, crop: np.ndarray, region: RegionDef, text: str) -> list[str]:
         assert self.template_dir is not None
         self.template_dir.mkdir(parents=True, exist_ok=True)
-        glyphs = self._digit_glyphs(crop, region)
-        digits = [c for c in text if c.isdigit()]
-        if len(glyphs) != len(digits):
-            raise ValueError(f"found {len(glyphs)} glyphs but label has {len(digits)} digits")
+        if parse_amount(text) is None:
+            raise ValueError(f"'{text}' is not an amount (digits, separators, optional currency sign / k / M)")
+        glyphs = [t[1] for t in self._number_tokens(crop, region) if t[0] == "glyph"]
+        chars = [c for c in re.sub(r"\s", "", text) if c not in ".,"]  # separators are matched by position, not template
+        if len(glyphs) != len(chars):
+            raise ValueError(f"found {len(glyphs)} glyphs but label has {len(chars)} characters (not counting . and ,)")
         saved = []
-        for g, d in zip(glyphs, digits):
-            n = len(list(self.template_dir.glob(f"digit_{d}-*.png")))
-            path = self.template_dir / f"digit_{d}-{n}.png"
+        for g, c in zip(glyphs, chars):
+            if c.isdigit():
+                stem, store, key = f"digit_{c}", self.digit_t, c
+            elif c in SYMBOL_NAMES:
+                name = SYMBOL_NAMES[c]
+                stem, store, key = f"sym_{name}", self.sym_t, SYMBOLS[name]
+            else:
+                raise ValueError(f"no template type for '{c}'")
+            n = len(list(self.template_dir.glob(f"{stem}-*.png")))
+            path = self.template_dir / f"{stem}-{n}.png"
             cv2.imwrite(str(path), (g * 255).astype(np.uint8))
-            self.digit_t.setdefault(d, []).append(g)
+            store.setdefault(key, []).append(g)
             saved.append(path.name)
         return saved
 
@@ -150,24 +169,37 @@ class Recognizer:
         sub = self._sub(card, self.layout.suit_box)
         return _normalize_glyph(_ink_mask_card(sub), SUIT_GLYPH)
 
-    def _digit_glyphs(self, crop: np.ndarray, region: RegionDef) -> list[np.ndarray]:
+    def _number_tokens(self, crop: np.ndarray, region: RegionDef) -> list[tuple[str, np.ndarray | None]]:
+        """Left-to-right ("glyph", image) for full-height characters and ("sep", None) for small marks
+        sitting low in the text band between them (decimal points / thousands separators)."""
         gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
         mask = (gray > 150) if region.polarity == "light" else (gray < 100)
         mask = mask.astype(np.uint8) * 255
         n, labels, stats, _ = cv2.connectedComponentsWithStats(mask, 8)
-        comps = [stats[i] for i in range(1, n) if stats[i][cv2.CC_STAT_AREA] >= 12]
-        if not comps:
+        comps = [stats[i] for i in range(1, n) if stats[i][cv2.CC_STAT_AREA] >= 3]
+        big = [c for c in comps if c[cv2.CC_STAT_AREA] >= 12]
+        if not big:
             return []
-        max_h = max(c[cv2.CC_STAT_HEIGHT] for c in comps)
-        comps = [c for c in comps if c[cv2.CC_STAT_HEIGHT] >= 0.6 * max_h]  # drop commas/dots/noise
-        comps.sort(key=lambda c: c[cv2.CC_STAT_LEFT])
-        out = []
+        max_h = max(c[cv2.CC_STAT_HEIGHT] for c in big)
+        tall = [c for c in big if c[cv2.CC_STAT_HEIGHT] >= 0.6 * max_h]
+        top = min(c[1] for c in tall)
+        bottom = max(c[1] + c[3] for c in tall)
+        left = min(c[0] for c in tall)
+        right = max(c[0] + c[2] for c in tall)
+        med_w = float(np.median([c[2] for c in tall]))
+        tokens = []
         for c in comps:
             x, y, w, h = c[0], c[1], c[2], c[3]
-            g = _normalize_glyph(mask[y:y + h, x:x + w], GLYPH)
-            if g is not None:
-                out.append(g)
-        return out
+            if c[cv2.CC_STAT_HEIGHT] >= 0.6 * max_h and c[cv2.CC_STAT_AREA] >= 12:
+                g = _normalize_glyph(mask[y:y + h, x:x + w], GLYPH)
+                if g is not None:
+                    tokens.append((x, "glyph", g))
+            elif (left < x + w / 2 < right and y + h / 2 > top + 0.6 * (bottom - top)
+                  and w <= 0.6 * med_w and h <= 0.5 * max_h):
+                tokens.append((x, "sep", None))
+            # anything else (specks, underlines, marks high in the band) is ignored
+        tokens.sort(key=lambda t: t[0])
+        return [(k, g) for _, k, g in tokens]
 
     @staticmethod
     def _best(glyph, templates: dict[str, list[np.ndarray]], allowed=None) -> tuple[str | None, float, float]:
@@ -206,15 +238,23 @@ class Recognizer:
         return None, 0.3, f"ambiguous (white {white:.2f}, back {blue:.2f})"
 
     def number(self, crop: np.ndarray, region: RegionDef) -> tuple[str | None, float, str]:
-        glyphs = self._digit_glyphs(crop, region)
-        if not glyphs:
+        tokens = self._number_tokens(crop, region)
+        if not any(k == "glyph" for k, _ in tokens):
             return "empty", 0.9, "no digits"  # confidently blank
-        digits, confs = [], []
-        for g in glyphs:
-            d, s, m = self._best(g, self.digit_t)
-            digits.append(d)
+        templates = {**self.digit_t, **self.sym_t}
+        chars, confs = [], []
+        for kind, g in tokens:
+            if kind == "sep":
+                chars.append("_")  # dot vs comma is decided by digit grouping, not shape
+                continue
+            c, s, m = self._best(g, templates)
+            chars.append(c)
             confs.append(s * min(1.0, 0.5 + 4 * m))
-        return "".join(digits), float(np.clip(min(confs), 0, 1)), f"{len(digits)} digits"
+        raw = "".join(chars)
+        amount = parse_amount(raw)
+        if amount is None:
+            return None, 0.2, f"unreadable amount '{raw}'"
+        return amount, float(np.clip(min(confs), 0, 1)), f"read '{raw}'"
 
     def indicator(self, crop: np.ndarray, region: RegionDef) -> tuple[str, float, str]:
         mean = float(cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY).mean())

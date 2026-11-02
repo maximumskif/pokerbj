@@ -36,7 +36,7 @@ export function RegionInspector({ regionId, layout, state, onClose, notify }: Pr
   };
 
   const hint =
-    reg.kind === "card" ? "e.g. Ah, 10d, Ks, hidden, empty" : reg.kind === "number" ? "digits, or empty" : "on / off";
+    reg.kind === "card" ? "e.g. Ah, 10d, Ks, hidden, empty" : reg.kind === "number" ? "e.g. 1250, 1,250, 12.50, $12.50, 1.5k, or empty" : "on / off";
 
   return (
     <div className="modal-bg" onClick={onClose}>

@@ -14,6 +14,7 @@ import cv2
 import numpy as np
 from pydantic import BaseModel, Field
 
+from .amounts import parse_amount
 from .analysis import PokerSettings, analyze_blackjack, analyze_holdem
 from .capture import ReplaySource, ScreenSource, SourceError, frame_change, frame_signature
 from .claude_client import ClaudeService
@@ -377,6 +378,11 @@ class AppService:
         reg = self.layout.region(c.region_id)
         if not reg:
             raise ValueError(f"unknown region {c.region_id}")
+        if c.value is not None and reg.kind == "number" and c.value != "empty":
+            amount = parse_amount(c.value)
+            if amount is None:
+                raise ValueError(f"'{c.value}' is not an amount (e.g. 1250, 1,250, 12.50, $12.50, 1.5k)")
+            c = c.model_copy(update={"value": amount})
         if c.value is not None:
             Observation(region_id=reg.id, kind=reg.kind, value=c.value, confidence=1, captured_at=0, frame_id=0)  # validates
         self.stabilizer.set_override(reg.id, c.value, reg.kind, time.time())

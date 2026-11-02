@@ -214,7 +214,7 @@ function CalibrationTab({ s, save, state, notify, draft, setDraft, drawing, setD
 
   const label = async () => {
     try {
-      const r = await api.post("/api/calibrate/template", { region_id: tplRegion, value: tplValue.replace(/^10/, "T") });
+      const r = await api.post("/api/calibrate/template", { region_id: tplRegion, value: tplValue });
       notify(`Saved ${r.saved.join(", ")}`);
     } catch (e) {
       notify(String(e), true);
@@ -288,7 +288,7 @@ function CalibrationTab({ s, save, state, notify, draft, setDraft, drawing, setD
           <option value="">region…</option>
           {Object.keys(state?.regions ?? {}).filter((id) => !id.startsWith("btn_")).map((id) => <option key={id} value={id}>{id}</option>)}
         </select>
-        <input placeholder="e.g. Qh or 125" value={tplValue} onChange={(e) => setTplValue(e.target.value)} />
+        <input placeholder="e.g. Qh, 125, $12.50" value={tplValue} onChange={(e) => setTplValue(e.target.value)} />
         <button onClick={label} disabled={!tplRegion || !tplValue}>Save template</button>
       </div>
     </div>

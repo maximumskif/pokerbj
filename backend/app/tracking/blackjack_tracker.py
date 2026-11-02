@@ -5,6 +5,7 @@ import time
 from collections import Counter
 from typing import Callable
 
+from ..amounts import amount_value
 from ..cards import Card
 from ..engines.bj_rules import BlackjackRules
 from ..schemas import Layout, RegionState, TimelineEvent
@@ -158,7 +159,7 @@ class BlackjackTracker:
             s = val(rid)
             if not s:
                 return {"region": rid, "value": None, "status": "pending", "confidence": 0.0}
-            v = int(s.value) if s.value not in (None, "") and s.value.isdigit() else None
+            v = amount_value(s.value)
             return {"region": rid, "value": v, "status": s.status, "confidence": s.confidence, "source": s.source}
 
         def on(rid):

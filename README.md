@@ -32,7 +32,7 @@ _Last updated 2026-11-02._
 2. Calibrate a real table: Settings → Calibration → copy a layout → select the game window → draw regions → label a few cards/numbers.
 3. Try the overlay on the real desktop and check placement and DPI scaling.
 4. Add `ANTHROPIC_API_KEY` to `.env` and confirm a live explanation passes validation.
-5. Possible improvements: decimal/currency amount parsing (currently digits only), a Claude explanation for chess reviews.
+5. Possible improvement: a Claude explanation for chess reviews.
 
 **Scope decisions:** live overlay for blackjack/hold'em is a visible window with no detection evasion; chess is post-game review only (no live board reading).
 
@@ -177,7 +177,9 @@ Region ids drive the game logic:
   untested on a real desktop. DPI scaling and multi-monitor offsets may need adjustment.
 * **Recognition is template matching, not general OCR.** It is reliable on the synthetic table. A real table needs
   calibration (regions + labelled glyphs) and will be less robust to animations, skins and scaling. No Tesseract is used.
-  Decimal amounts and currency symbols are not parsed (digits only).
+  Amounts may use thousands separators and decimals in either convention (a separator before exactly 3 digits
+  groups thousands, before 1-2 final digits it is the decimal point), a leading/trailing currency sign and a k/M
+  suffix. `$` is built in; label a crop containing €, £ or the table's own `$` so its glyph is learned.
 * **Blackjack EV** uses an infinite-deck model, or probabilities frozen at the observed shoe composition (no removal
   within the hand). Split EV includes optimal resplits up to the hand limit (and RSA setting); when tens may
   only be split by matching rank, a resplit chance is taken as 1/4 of the ten-value draws. The fixed chart covers

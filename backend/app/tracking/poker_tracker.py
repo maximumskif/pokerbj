@@ -5,6 +5,7 @@ import re
 import time
 from typing import Callable
 
+from ..amounts import amount_value
 from ..cards import Card
 from ..schemas import Layout, RegionState, TimelineEvent
 
@@ -24,18 +25,16 @@ class PokerTracker:
         self.in_hand = False
         self.street = None
         self.history: list[dict] = []
-        self._bets: dict[str, int] = {}
+        self._bets: dict[str, int | float] = {}
         self._had_cards: set[int] = set()
         self._board_n = 0
 
     def _event(self, kind, msg, **data):
         self.emit(TimelineEvent(t=time.time(), kind=kind, message=msg, data=data))
 
-    def _num(self, states, rid) -> int | None:
+    def _num(self, states, rid) -> int | float | None:
         s = states.get(rid)
-        if _ok(s) and s.value and s.value.isdigit():
-            return int(s.value)
-        return None
+        return amount_value(s.value) if _ok(s) else None
 
     def update(self, states: dict[str, RegionState]) -> None:
         hero = [states.get(f"hero_{i}") for i in range(2)]
@@ -97,7 +96,7 @@ class PokerTracker:
 
         def number(rid):
             s = states.get(rid)
-            v = int(s.value) if s and s.value and s.value.isdigit() else None
+            v = amount_value(s.value) if s else None
             return {"region": rid, "value": v, "status": s.status if s else "pending", "confidence": s.confidence if s else 0.0,
                     "changing": bool(s and s.status != "manual" and s.last_raw != s.value)}
 
