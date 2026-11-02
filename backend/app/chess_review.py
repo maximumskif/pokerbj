@@ -190,7 +190,11 @@ class ReviewJobs:
         def run():
             try:
                 with chess.engine.SimpleEngine.popen_uci(path) as eng:
-                    eng.configure({"Threads": max(1, (os.cpu_count() or 2) // 2), "Hash": 128})
+                    # depth-limited search with one thread in a fresh process is reproducible run to run;
+                    # time-limited search never is, so there extra threads just buy depth
+                    threads = 1 if not time_per_move else max(1, (os.cpu_count() or 2) // 2)
+                    eng.configure({"Threads": threads, "Hash": 128})
+                    job["settings"]["threads"] = threads
                     job["engine"] = eng.id.get("name", job["engine"])
                     limit = chess.engine.Limit(time=time_per_move) if time_per_move else chess.engine.Limit(depth=depth)
                     job["result"] = review(game, eng, limit, lambda d, n: job.update(progress=round(d / n, 3)))

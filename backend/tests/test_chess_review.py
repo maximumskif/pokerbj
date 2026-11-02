@@ -112,3 +112,31 @@ def test_real_stockfish_scholars_mate():
     assert by_san["Nf6"]["classification"] == "blunder"
     assert by_san["Nf6"]["mate_after"] == -1
     assert by_san["Qxf7#"]["classification"] == "best"
+
+
+OPERA = ("[White \"Morphy\"]\n[Black \"Duke Karl / Count Isouard\"]\n[Result \"1-0\"]\n\n"
+         "1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 "
+         "9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 "
+         "15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# 1-0")
+
+
+@pytest.mark.skipif(find_engine() is None, reason="Stockfish not installed")
+def test_depth_review_is_reproducible():
+    """Depth-limited jobs run Stockfish single-threaded, so the same PGN gives the same review every time."""
+    import time
+
+    from app.chess_review import ReviewJobs
+
+    jobs = ReviewJobs()
+
+    def run():
+        jid = jobs.start(OPERA, depth=12)
+        deadline = time.time() + 120
+        while jobs.get(jid)["status"] == "running" and time.time() < deadline:
+            time.sleep(0.05)
+        job = jobs.get(jid)
+        assert job["status"] == "done", job["error"]
+        assert job["settings"]["threads"] == 1
+        return job["result"]["moves"]
+
+    assert run() == run()

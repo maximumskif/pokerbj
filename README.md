@@ -11,7 +11,7 @@ platform's rules before using live capture.** Replay analysis of saved screensho
 
 ## Project status (pick up here)
 
-_Last updated 2026-10-28._
+_Last updated 2026-11-02._
 
 **Done and verified**
 
@@ -22,7 +22,7 @@ _Last updated 2026-10-28._
 | Capture → recognition → stabilization → state versioning | ✅ synthetic replays end to end; Windows capture smoke-tested in CI |
 | Dashboard (preview + overlays, corrections, calibration, timeline, settings, privacy) | ✅ driven in headless Chromium |
 | Live overlay window | ✅ rendered and unit-tested; not yet used on a real Windows desktop |
-| Chess post-game review | ✅ real Stockfish 19 review of the Opera Game |
+| Chess post-game review | ✅ real Stockfish 19 review of the Opera Game; depth-limited reviews run single-threaded so the same PGN always gives the same review (time-limited reviews use more threads and vary run to run) |
 | Claude explanations | ⚠️ implemented + mocked tests; **no live API call made yet** (needs `ANTHROPIC_API_KEY`) |
 | CI (Ubuntu + Windows + frontend build) | ✅ green |
 
