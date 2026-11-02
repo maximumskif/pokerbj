@@ -320,6 +320,19 @@ def chess_review_job(job_id: str):
     return job
 
 
+@app.post("/api/chess/review/{job_id}/explain")
+async def chess_review_explain(job_id: str):
+    job = chess_jobs.get(job_id)
+    if not job:
+        raise HTTPException(404, "unknown job")
+    if job["status"] != "done":
+        raise HTTPException(400, "review is not finished")
+    res = await service.claude.explain_chess(job["result"], force=True)
+    job["explanation"] = res
+    service.event("claude", f"Chess summary: {res['status']}" + (f" ({res['reason']})" if res.get("reason") else ""))
+    return res
+
+
 # ---------------------------------------------------------------- overlay
 @app.post("/api/overlay/launch")
 def launch_overlay():

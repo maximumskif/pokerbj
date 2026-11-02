@@ -23,7 +23,7 @@ _Last updated 2026-11-02._
 | Dashboard (preview + overlays, corrections, calibration, timeline, settings, privacy) | ✅ driven in headless Chromium |
 | Live overlay window | ✅ rendered and unit-tested; not yet used on a real Windows desktop |
 | Chess post-game review | ✅ real Stockfish 19 review of the Opera Game; depth-limited reviews run single-threaded so the same PGN always gives the same review (time-limited reviews use more threads and vary run to run) |
-| Claude explanations | ⚠️ implemented + mocked tests; **no live API call made yet** (needs `ANTHROPIC_API_KEY`) |
+| Claude explanations (blackjack/hold'em decisions + chess review summaries) | ⚠️ implemented + mocked tests; **no live API call made yet** (needs `ANTHROPIC_API_KEY`) |
 | CI (Ubuntu + Windows + frontend build) | ✅ green |
 
 **Next steps**
@@ -31,8 +31,7 @@ _Last updated 2026-11-02._
 1. On the Windows PC: `.\start.ps1`, then `python backend\scripts\get_stockfish.py` (the engine binary is not in git).
 2. Calibrate a real table: Settings → Calibration → copy a layout → select the game window → draw regions → label a few cards/numbers.
 3. Try the overlay on the real desktop and check placement and DPI scaling.
-4. Add `ANTHROPIC_API_KEY` to `.env` and confirm a live explanation passes validation.
-5. Possible improvement: a Claude explanation for chess reviews.
+4. Add `ANTHROPIC_API_KEY` to `.env` and confirm a live explanation (table and chess summary) passes validation.
 
 **Scope decisions:** live overlay for blackjack/hold'em is a visible window with no detection evasion; chess is post-game review only (no live board reading).
 
@@ -86,6 +85,9 @@ and the review shows the engine's best move and line, the classification (best /
 blunder, using Lichess-style winning-chance thresholds), per-side accuracy and a win-probability graph.
 Install the engine with `python backend/scripts/get_stockfish.py` (official GPLv3 release into `backend/engines/`),
 or set `STOCKFISH_PATH` in `.env`. Chess is post-game only: there is no live board reading.
+Use depth 16 or more: at depth 12 Stockfish misses short mates in some positions (in the Opera Game it labels
+Morphy's 15.Bxd7+ a blunder). **Summarize with Claude** (needs `ANTHROPIC_API_KEY`) writes a short summary with
+key moments and takeaways; it is rejected unless every number and move in it comes from the review.
 
 ### Optional: Claude
 

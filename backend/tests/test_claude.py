@@ -125,3 +125,62 @@ def test_rejected_output_not_displayed(monkeypatch):
     c._client = _fake_client(parsed=exp(explanation="Hitting wins 80% of the time."))
     res = asyncio.run(c.explain(ANALYSIS, []))
     assert res["status"] == "rejected" and "explanation" not in res
+
+
+# ---- chess summaries ---------------------------------------------------------
+
+from app.chess_review import parse_pgn, review  # noqa: E402
+from app.claude_client import ChessMoment, ChessSummary, chess_payload, validate_chess_summary  # noqa: E402
+from tests.test_chess_review import SCHOLAR, FakeEngine  # noqa: E402
+
+
+@pytest.fixture(scope="module")
+def scholar_review():
+    return review(parse_pgn(SCHOLAR), FakeEngine(), None)
+
+
+def _summary(**kw):
+    base = dict(headline="Black missed the mate threat on f7.",
+                summary="White aimed the queen and bishop at f7. Black developed with Nf6, which allowed Qxf7# at once.",
+                key_moments=[ChessMoment(ply=6, san="Nf6", comment="Allows forced mate in 1; the engine preferred a defence.")],
+                lessons=["Before developing, check what the opponent's last move threatens."])
+    base.update(kw)
+    return ChessSummary(**base)
+
+
+def test_chess_payload_lists_the_blunder(scholar_review):
+    p = chess_payload(scholar_review)
+    nf6 = next(m for m in p["notable_moves"] if m["san"] == "Nf6")
+    assert nf6["ply"] == 6 and nf6["classification"] == "blunder" and "forced mate in 1" in nf6["note"]
+
+
+def test_valid_chess_summary_accepted(scholar_review):
+    p = chess_payload(scholar_review)
+    assert validate_chess_summary(_summary(), scholar_review, p) == []
+
+
+@pytest.mark.parametrize("kw,needle", [
+    ({"summary": "Black had a 73% chance before Nf6."}, "unsupported number"),
+    ({"summary": "Nc3 would have changed nothing; Black should have played Ng4."}, "not in the game"),
+    ({"key_moments": [ChessMoment(ply=6, san="Qxf7#", comment="x")]}, "was 'Nf6'"),
+    ({"key_moments": [ChessMoment(ply=40, san="Nf6", comment="x")]}, "not one of the notable moves"),
+])
+def test_chess_summary_rejections(scholar_review, kw, needle):
+    p = chess_payload(scholar_review)
+    problems = validate_chess_summary(_summary(**kw), scholar_review, p)
+    assert any(needle in x for x in problems), problems
+
+
+def test_chess_summary_round_trip(monkeypatch, scholar_review):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+    c = ClaudeService()
+    c._client = _fake_client(parsed=_summary())
+    res = asyncio.run(c.explain_chess(scholar_review, force=True))
+    assert res["status"] == "ok" and res["summary"]["key_moments"][0]["san"] == "Nf6"
+    assert asyncio.run(c.explain_chess(scholar_review))["cached"] and c.requests_made == 1
+    c2 = ClaudeService()
+    c2._client = _fake_client(parsed=_summary(summary="Ng4 would have held."))
+    assert asyncio.run(c2.explain_chess(scholar_review, force=True))["status"] == "rejected"
+    monkeypatch.delenv("ANTHROPIC_API_KEY")
+    assert ClaudeService().has_key is False
+    assert asyncio.run(ClaudeService().explain_chess(scholar_review))["status"] == "skipped"

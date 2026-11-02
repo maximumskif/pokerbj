@@ -78,6 +78,8 @@ export function ChessReview({ notify }: { notify: (m: string, e?: boolean) => vo
   const [job, setJob] = useState<Json>(null);
   const [engine, setEngine] = useState<Json>(null);
   const [ply, setPly] = useState(1);
+  const [explain, setExplain] = useState<Json>(null);
+  const [explaining, setExplaining] = useState(false);
 
   useEffect(() => {
     api.get("/api/chess/status").then(setEngine);
@@ -92,13 +94,26 @@ export function ChessReview({ notify }: { notify: (m: string, e?: boolean) => vo
     try {
       const { job_id } = await api.post("/api/chess/review", { pgn, depth });
       setJob({ id: job_id, status: "running", progress: 0 });
+      setExplain(null);
       setPly(1);
     } catch (e) {
       notify(String(e), true);
     }
   };
 
+  const askClaude = async () => {
+    setExplaining(true);
+    try {
+      setExplain(await api.post(`/api/chess/review/${job.id}/explain`, {}));
+    } catch (e) {
+      notify(String(e), true);
+    } finally {
+      setExplaining(false);
+    }
+  };
+
   const r = job?.result;
+  const s = explain?.status === "ok" ? explain.summary : null;
   const m = r?.moves?.[ply - 1];
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -154,6 +169,31 @@ export function ChessReview({ notify }: { notify: (m: string, e?: boolean) => vo
               ))}
             </div>
             <p className="small muted">{r.method.classification}. {r.method.note}.</p>
+          </section>
+        )}
+        {r && (
+          <section className="panel">
+            <div className="panel-head">
+              <h2>Claude summary</h2>
+              <button onClick={askClaude} disabled={explaining}>{explaining ? "Asking Claude…" : s ? "Ask again" : "Summarize with Claude"}</button>
+            </div>
+            {!explain && <p className="small muted">Plain-language summary of this review. Claude only restates the engine's facts; anything that adds numbers or moves is rejected.</p>}
+            {explain && !s && <p className="small" style={{ color: "var(--warn)" }}>{explain.status}: {explain.reason}</p>}
+            {s && (
+              <>
+                <p><b>{s.headline}</b></p>
+                <p className="small">{s.summary}</p>
+                <ul className="small">
+                  {s.key_moments.map((k: Json) => (
+                    <li key={k.ply}>
+                      <button className="mv" onClick={() => setPly(k.ply)}>{k.san}</button> {k.comment}
+                    </li>
+                  ))}
+                </ul>
+                {s.lessons.length > 0 && <p className="small muted">Takeaways: {s.lessons.join(" · ")}</p>}
+                <p className="small muted">{explain.model}{explain.cached ? " · cached" : ""}</p>
+              </>
+            )}
           </section>
         )}
       </div>
