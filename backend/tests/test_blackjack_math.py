@@ -248,3 +248,67 @@ def test_even_money_matches_insurance_logic():
     assert ins["even_money"]["better"] == "decline even money"
     ins65 = insurance_analysis({"mode": "unknown"}, BlackjackRules(blackjack_payout=1.2), True)
     assert ins65["even_money"]["better"] == "take even money"  # 1.2 * 9/13 = 0.83 < 1
+
+
+# ---- splits with resplits ---------------------------------------------------
+
+def _no_resplit_split(m, card):
+    """Old closed form: 2 x one-hand EV, each split hand played without splitting again."""
+    return 2 * sum(INFINITE_DECK[v - 1] * ev for v, (ev, _) in m._split_hand_values(card).items())
+
+
+def test_split_without_resplits_is_twice_one_hand():
+    for card, up in [(8, 10), (8, 6), (1, 10), (2, 7), (9, 7)]:
+        m = EVModel(up, INFINITE_DECK, BlackjackRules(max_split_hands=2, resplit_aces=True))
+        assert m.split(card) == pytest.approx(_no_resplit_split(m, card), abs=1e-12)
+        # aces without RSA never resplit, whatever the hand limit
+        m4 = EVModel(up, INFINITE_DECK, BlackjackRules(max_split_hands=4, resplit_aces=False))
+        if card == 1:
+            assert m4.split(1) == pytest.approx(_no_resplit_split(m4, 1), abs=1e-12)
+
+
+def test_resplitting_never_hurts_and_respects_hands_in_play():
+    for card in range(1, 11):
+        for up in range(1, 11):
+            evs = [EVModel(up, INFINITE_DECK, BlackjackRules(max_split_hands=n, resplit_aces=True)).split(card)
+                   for n in (2, 3, 4)]
+            assert evs[0] <= evs[1] + 1e-12 <= evs[2] + 2e-12
+    # splitting the third of four allowed hands leaves no resplits: same as a split to 2 from scratch
+    m4 = EVModel(6, INFINITE_DECK, BlackjackRules(max_split_hands=4))
+    m2 = EVModel(6, INFINITE_DECK, BlackjackRules(max_split_hands=2))
+    assert m4.split(8, num_hands=3) == pytest.approx(m2.split(8), abs=1e-12)
+    assert m4.split(8, num_hands=2) < m4.split(8, num_hands=1)
+
+
+def test_resplit_aces_matches_independent_simulation():
+    """A,A vs 10, resplit aces to 4 hands, one card per ace: simulated with explicit draws."""
+    rng = random.Random(11)
+    n = 200_000
+    tot = 0
+    for _ in range(n):
+        hands, pending, finals = 2, 2, []
+        while pending:
+            c = _draw(rng)
+            pending -= 1
+            if c == 1 and hands < 4:
+                hands += 1
+                pending += 2
+            else:
+                finals.append(12 if c == 1 else 11 + c)  # one card on an ace, stand
+        dealer = _sim_dealer(10, rng, False)
+        tot += sum(_settle(f, dealer) for f in finals)
+    sim = tot / n
+    d = EVModel(10, INFINITE_DECK, BlackjackRules(max_split_hands=4, resplit_aces=True)).split_detail(1)
+    assert sim == pytest.approx(d["ev"], abs=0.02)  # ~4 SE; resplitting is worth ~+0.13 here
+    assert d["hands"] == pytest.approx(2.1749, abs=1e-4)
+
+
+def test_enhc_split_loses_every_stake_to_dealer_bj():
+    legal = {a: "legal" for a in ("hit", "stand", "double", "split")}
+    r = dict(dealer_peeks=False, max_split_hands=4, double_after_split=True)
+    full = EVModel(10, INFINITE_DECK, BlackjackRules(**r)).evaluate([8, 8], legal)
+    obo = EVModel(10, INFINITE_DECK, BlackjackRules(**r, enhc_original_bets_only=True)).evaluate([8, 8], legal)
+    p_bj = INFINITE_DECK[0]
+    stake = full["split"]["stake"]
+    assert stake > 2  # resplits and doubles add stakes
+    assert obo["ev"]["split"] - full["ev"]["split"] == pytest.approx(p_bj * (stake - 1))

@@ -17,7 +17,7 @@ _Last updated 2026-11-02._
 
 | Feature | State |
 |---|---|
-| Blackjack engine (rules, legal actions, basic strategy, EV, insurance/even money, shoe tracking) | ✅ tested against published values + independent simulator |
+| Blackjack engine (rules, legal actions, basic strategy, EV incl. resplits, insurance/even money, shoe tracking) | ✅ tested against published values + independent simulators |
 | Hold'em engine (evaluator, ranges, exact/Monte Carlo equity, pot odds) | ✅ exhaustive evaluator check, hand-counted equities |
 | Capture → recognition → stabilization → state versioning | ✅ synthetic replays end to end; Windows capture smoke-tested in CI |
 | Dashboard (preview + overlays, corrections, calibration, timeline, settings, privacy) | ✅ driven in headless Chromium |
@@ -32,7 +32,7 @@ _Last updated 2026-11-02._
 2. Calibrate a real table: Settings → Calibration → copy a layout → select the game window → draw regions → label a few cards/numbers.
 3. Try the overlay on the real desktop and check placement and DPI scaling.
 4. Add `ANTHROPIC_API_KEY` to `.env` and confirm a live explanation passes validation.
-5. Possible improvements: resplit-aware split EV, decimal/currency amount parsing (currently digits only), a Claude explanation for chess reviews.
+5. Possible improvements: decimal/currency amount parsing (currently digits only), a Claude explanation for chess reviews.
 
 **Scope decisions:** live overlay for blackjack/hold'em is a visible window with no detection evasion; chess is post-game review only (no live board reading).
 
@@ -179,7 +179,8 @@ Region ids drive the game logic:
   calibration (regions + labelled glyphs) and will be less robust to animations, skins and scaling. No Tesseract is used.
   Decimal amounts and currency symbols are not parsed (digits only).
 * **Blackjack EV** uses an infinite-deck model, or probabilities frozen at the observed shoe composition (no removal
-  within the hand). Split EV ignores resplits. The fixed chart covers
+  within the hand). Split EV includes optimal resplits up to the hand limit (and RSA setting); when tens may
+  only be split by matching rank, a resplit chance is taken as 1/4 of the ten-value draws. The fixed chart covers
   4–8 deck peek games. Other configurations fall back to the EV-maximising action and are labelled.
 * **Shoe tracking** relies on seeing every hand at the layout's regions. Other players' cards outside the regions
   are treated as unseen random cards (valid by exchangeability, but a misread that is committed and never

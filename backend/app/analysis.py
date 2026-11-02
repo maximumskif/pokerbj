@@ -138,7 +138,7 @@ def analyze_blackjack(snap: dict, rules: BlackjackRules, version: int) -> dict:
         model_label = ("continuous shuffler: infinite-deck model" if comp["mode"] == "csm"
                        else "shoe composition unknown: infinite-deck model (each rank 1/13)")
     m = EVModel(upv, p, rules)
-    evr = m.evaluate(values, available)
+    evr = m.evaluate(values, available, num_hands=num_hands)
     ev = {a: round(v, 4) for a, v in evr["ev"].items()}
     best_ev = max(ev, key=ev.get) if ev else None
     dist = {str(k): round(v, 4) for k, v in m.dist.items() if k in (17, 18, 19, 20, 21, "bust")}
@@ -168,7 +168,8 @@ def analyze_blackjack(snap: dict, rules: BlackjackRules, version: int) -> dict:
         "basis": evr["basis"], "model": model, "model_label": model_label,
         "assumptions": [
             "after this decision, play continues with the total-dependent optimal strategy under the same model",
-            "split EV = 2 x one-hand EV; resplits not modeled" + (" (lower bound: resplitting allowed)" if rules.max_split_hands > 2 else ""),
+            ("split EV includes optimal resplits up to the hand limit"
+             + (f"; expected {evr['split']['hands']:.2f} hands, {evr['split']['stake']:.2f} units staked" if evr.get("split") else "")),
             "insurance / even money evaluated separately (see insurance panel when the upcard is an ace)",
             "values are long-run averages; any single hand can win or lose",
         ],
