@@ -201,3 +201,18 @@ main { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); g
 .movelist { display: flex; flex-wrap: wrap; gap: 3px; max-height: 220px; overflow: auto; }
 .mv { padding: 2px 6px; font-size: 12px; border-left: 3px solid; border-radius: 3px; }
 .mv.on { background: #1f4f8a; }
+
+/* general screen assistant */
+.as-frame { width: 100%; margin-top: 10px; border: 1px solid var(--line); border-radius: 6px; display: block; }
+.as-chat { display: flex; flex-direction: column; height: calc(100vh - 110px); min-height: 400px; }
+.as-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+.as-msg { white-space: pre-wrap; line-height: 1.45; padding: 8px 12px; border-radius: 8px; max-width: 85%; overflow-wrap: anywhere; }
+.as-msg.user { align-self: flex-end; background: #17324f; }
+.as-msg.assistant { align-self: flex-start; background: var(--panel-2); }
+.as-msg.assistant.watch { border-left: 3px solid var(--warn); }
+.as-msg.system { align-self: center; color: var(--muted); font-size: 12px; padding: 2px; }
+.as-msg .pill { margin-right: 6px; }
+.as-input { display: flex; gap: 8px; align-items: stretch; border-top: 1px solid var(--line); padding-top: 10px; }
+.as-input textarea { flex: 1; resize: vertical; background: #0e121b; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 8px; font: inherit; }
+.as-btns { display: flex; flex-direction: column; gap: 6px; }
+.as-btns .primary { background: #17324f; border-color: var(--accent); }

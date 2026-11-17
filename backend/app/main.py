@@ -46,6 +46,14 @@ service = AppService(ROOT, DATA_DIR)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     task = asyncio.create_task(service.run_loop())
+    if os.environ.get("ASSISTANT_AUTO_WATCH", "1") == "1":  # start watching the main monitor right away
+        mons = list_monitors()
+        if mons:
+            try:
+                assistant.set_target({"kind": "region", "rect": mons[0]["rect"], "title": "Whole screen"})
+                asyncio.create_task(assistant.warm_up())
+            except Exception:
+                logging.getLogger("assistant").exception("auto-watch failed")
     yield
     task.cancel()
 
@@ -285,6 +293,74 @@ async def vision(v: VisionReq):
     return res
 
 
+# ---------------------------------------------------------------- general screen assistant
+from .assistant import ScreenAssistant  # noqa: E402
+from .brain import Brain  # noqa: E402
+
+assistant = ScreenAssistant(service.claude, brain=Brain(DATA_DIR / "brain.db"))
+
+
+class AssistantTarget(BaseModel):
+    target: dict
+
+
+class AssistantAsk(BaseModel):
+    text: str
+    deep: bool = False
+
+
+class AssistantWatch(BaseModel):
+    on: bool
+    interval_s: float | None = None
+    focus: str | None = None
+
+
+@app.get("/api/assistant")
+def assistant_state():
+    return assistant.state()
+
+
+@app.post("/api/assistant/target")
+async def assistant_target(t: AssistantTarget):
+    try:
+        assistant.set_target(t.target)
+    except Exception as e:
+        raise HTTPException(400, str(e))
+    asyncio.create_task(assistant.warm_up())  # load the local model now, not on the first question
+    return assistant.state()
+
+
+@app.post("/api/assistant/ask")
+async def assistant_ask(a: AssistantAsk):
+    try:
+        await assistant.ask(a.text, deep=a.deep)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return assistant.state()
+
+
+@app.post("/api/assistant/watch")
+async def assistant_watch(w: AssistantWatch):
+    try:
+        assistant.set_watch(w.on, w.interval_s, w.focus)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return assistant.state()
+
+
+@app.delete("/api/assistant")
+def assistant_clear():
+    assistant.clear()
+    return assistant.state()
+
+
+@app.get("/api/assistant/frame.jpg")
+def assistant_frame():
+    if assistant.last_frame_jpg is None:
+        raise HTTPException(404, "no screenshot yet")
+    return Response(assistant.last_frame_jpg, media_type="image/jpeg", headers={"Cache-Control": "no-store"})
+
+
 # ---------------------------------------------------------------- chess post-game review
 from .chess_review import ReviewJobs, find_engine  # noqa: E402
 
@@ -333,20 +409,6 @@ async def chess_review_explain(job_id: str):
     return res
 
 
-# ---------------------------------------------------------------- overlay
-@app.post("/api/overlay/launch")
-def launch_overlay():
-    import subprocess
-    import sys
-    if sys.platform != "win32" and not os.environ.get("DISPLAY") and not os.environ.get("WAYLAND_DISPLAY"):
-        raise HTTPException(400, "no desktop display available to show the overlay (run the backend natively on Windows)")
-    port = os.environ.get("TABLE_ASSISTANT_PORT", "8765")
-    subprocess.Popen([sys.executable, str(ROOT / "overlay.py"), "--url", f"http://127.0.0.1:{port}"])
-    service.event("control", "Overlay window launched")
-    return {"launched": True}
-
-
-# ---------------------------------------------------------------- history & privacy
 @app.get("/api/history")
 def history():
     return {"sessions": service.storage.sessions()}

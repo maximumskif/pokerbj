@@ -13,6 +13,7 @@ the window is fully uncovered; otherwise the frame is refused.
 from __future__ import annotations
 
 import json
+import threading
 import sys
 from pathlib import Path
 
@@ -143,10 +144,17 @@ class ScreenSource:
     synthetic = False
 
     def __init__(self, target: dict):
-        import mss
         self.target = target
-        self._mss = mss.mss()
+        self._local = threading.local()  # mss handles only work on the thread that made them
         self.label = target.get("title") or f"region {target.get('rect')}"
+
+    @property
+    def _mss(self):
+        m = getattr(self._local, "mss", None)
+        if m is None:
+            import mss
+            m = self._local.mss = mss.mss()
+        return m
 
     def rect(self) -> tuple[int, int, int, int]:
         if self.target["kind"] == "window":
@@ -171,6 +179,7 @@ class ScreenSource:
         except Exception as e:
             raise SourceError(f"screen capture failed: {e}") from e
         frame = np.asarray(shot)[..., :3].copy()  # BGRA -> BGR
+        self.capture_method = "screen"
         return frame, None
 
     def _grab_window(self, x: int, y: int, w: int, h: int) -> np.ndarray:
@@ -191,7 +200,12 @@ class ScreenSource:
         return np.asarray(shot)[..., :3].copy()
 
     def close(self):
-        self._mss.close()
+        m = getattr(self._local, "mss", None)
+        if m is not None:
+            try:
+                m.close()
+            except Exception:
+                pass
 
 
 class ReplaySource:

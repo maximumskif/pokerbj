@@ -423,6 +423,7 @@ class AppService:
             "replay_position": (self.source.index, len(self.source.frames)) if isinstance(self.source, ReplaySource) else None,
             "stale": stale,
             "capture_rect": getattr(self.source, "last_rect", None),
+            "capture_method": getattr(self.source, "capture_method", None),
             "server_time": now,
             "state_version": self.version,
         }
